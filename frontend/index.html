@@ -47,7 +47,6 @@
     </script>
     <script>
             // Global Dark Mode Persistence
-            // Immediately check localStorage to prevent flash of wrong theme
             (function () {
                 try {
                     const localTheme = localStorage.getItem('theme');
@@ -70,33 +69,35 @@
             font-family: 'Tajawal', sans-serif;
         }
 
-        /* Premium Glass Cards */
+        /* Premium Glass Cards - Behavior Only (Styles moved to Tailwind Utilities) */
+        /* Premium Glass Cards - Behavior Only (Styles moved to Tailwind Utilities) */
         .glass-card {
-            background: rgba(255, 255, 255, 0.6);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.6);
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
             transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .dark .glass-card {
-            background: rgba(15, 23, 42, 0.6);
-            /* Slate 900/60 */
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+        /* Force Glassmorphism - Custom CSS Override */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.25) !important;
+            backdrop-filter: blur(12px) !important;
+            -webkit-backdrop-filter: blur(12px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.4) !important;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05) !important;
+        }
+
+        .dark .glass-panel {
+            background: rgba(15, 23, 42, 0.35) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3) !important;
         }
 
         .glass-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            border-color: rgba(255, 255, 255, 0.8);
+            transform: translateY(-5px) scale(1.005);
+            /* Optional: Enhance shadow on hover via CSS or rely on Tailwind hover:shadow classes if added */
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
         }
 
         .dark .glass-card:hover {
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
-            border-color: rgba(255, 255, 255, 0.2);
-            background: rgba(30, 41, 59, 0.7);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
         }
 
         /* Nav Glass */
@@ -114,9 +115,31 @@
 
         /* Animated Backgrounds */
         .bg-aurora-light {
+            /* Kept for legacy fallback, but overridden by light-aurora-bg logic or modified here if preferred. 
+              User asked for separate class logic toggling. */
             background: linear-gradient(135deg, #eff6ff 0%, #ffffff 50%, #faf5ff 100%);
             background-size: 200% 200%;
             animation: aurora 15s ease infinite;
+        }
+
+        .light-aurora-bg {
+            background: linear-gradient(-45deg, #ffffff, #d1fae5, #e0f2fe, #f8fafc) !important;
+            background-size: 400% 400%;
+            animation: auroraBG 15s ease infinite;
+        }
+
+        @keyframes auroraBG {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
         }
 
         .bg-aurora-dark {
@@ -195,7 +218,7 @@
 <body
     class="bg-aurora-light dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col transition-colors duration-500 ease-in-out relative overflow-x-hidden selection:bg-amber-500/30">
 
-    <!-- Dark Mode Animated Background Layer -->
+    <!-- Dark Mode Animated Background Layer (z-0) -->
     <div
         class="fixed inset-0 z-0 pointer-events-none opacity-0 dark:opacity-100 transition-opacity duration-700 bg-aurora-dark">
         <!-- Glowing Orb -->
@@ -206,23 +229,26 @@
             style="animation-delay: 1s;"></div>
     </div>
 
-    <!-- Header -->
+    <!-- Theme-Aware Particle Canvas (z-1) - Sits ON TOP of background but BEHIND content -->
+    <canvas id="bg-canvas" class="fixed inset-0 z-[1] pointer-events-none"></canvas>
+
+    <!-- Header (z-20) -->
     <header class="p-8 text-center relative overflow-hidden z-20">
 
         <!-- Theme Toggle -->
         <button id="theme-toggle"
-            class="absolute top-6 left-6 w-12 h-12 rounded-full glass-card hover:bg-white/80 dark:hover:bg-slate-800/80 flex items-center justify-center text-slate-600 dark:text-amber-400 group transition-all duration-500 hover:rotate-12"
+            class="absolute top-6 left-6 w-12 h-12 flex items-center justify-center rounded-full cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-800 transition-all duration-300 z-50 glass-panel glass-card hover:text-amber-500 dark:hover:text-indigo-400 active:text-amber-600 dark:active:text-indigo-500 active:scale-90"
             aria-label="Toggle Theme">
-            <div class="relative w-6 h-6">
+            <div class="relative w-6 h-6 pointer-events-none">
                 <svg id="sun-icon"
-                    class="absolute inset-0 transform transition-all duration-500 rotate-0 scale-100 dark:rotate-90 dark:scale-0 dark:opacity-0"
+                    class="absolute inset-0 transform transition-all duration-500 ease-in-out hover:rotate-[360deg] active:scale-75 rotate-0 scale-100 dark:rotate-90 dark:scale-0 dark:opacity-0 pointer-events-none"
                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z">
                     </path>
                 </svg>
                 <svg id="moon-icon"
-                    class="absolute inset-0 transform transition-all duration-500 -rotate-90 scale-0 opacity-0 dark:rotate-0 dark:scale-100 dark:opacity-100"
+                    class="absolute inset-0 transform transition-all duration-500 ease-in-out hover:rotate-[360deg] active:scale-75 -rotate-90 scale-0 opacity-0 dark:rotate-0 dark:scale-100 dark:opacity-100 pointer-events-none"
                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z">
@@ -231,42 +257,45 @@
             </div>
             <!-- Glow for toggle -->
             <div
-                class="absolute inset-0 rounded-full bg-amber-400/20 dark:bg-indigo-400/20 blur-md opacity-0 group-hover:opacity-100 transition-opacity">
+                class="absolute inset-0 rounded-full bg-amber-400/20 dark:bg-indigo-400/20 blur-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
             </div>
         </button>
 
         <h1
-            class="text-6xl font-arabic text-transparent bg-clip-text bg-gradient-to-br from-indigo-700 to-purple-800 dark:from-amber-200 dark:to-orange-400 drop-shadow-sm mb-3 animate-fade-in-up pb-2">
+            class="text-6xl font-arabic text-transparent bg-clip-text bg-gradient-to-br from-indigo-700 to-purple-800 dark:from-amber-200 dark:to-orange-400 drop-shadow-sm mb-3 pb-2 scroll-reveal opacity-0 translate-y-10 transition-all duration-700 ease-out">
             رمضان كريم</h1>
-        <p class="text-slate-500 dark:text-slate-400 text-xl font-medium animate-fade-in-up backdrop-blur-sm inline-block px-4 py-1 rounded-full bg-white/30 dark:bg-black/30"
-            style="animation-delay: 0.1s" id="current-date">Thinking...</p>
+        <p class="text-slate-500 dark:text-slate-400 text-xl font-medium backdrop-blur-sm inline-block px-4 py-1 rounded-full bg-white/30 dark:bg-black/30 scroll-reveal opacity-0 translate-y-10 transition-all duration-700 ease-out delay-100"
+            id="current-date">Thinking...</p>
 
         <!-- Premium Progress Bar -->
-        <div class="mt-8 max-w-lg mx-auto relative h-6 bg-slate-200/50 dark:bg-slate-800/50 rounded-full overflow-hidden shadow-inner backdrop-blur-md animate-fade-in-up ring-1 ring-white/50 dark:ring-white/10"
-            style="animation-delay: 0.2s">
+        <!-- Premium Progress Bar -->
+        <div
+            class="mt-8 max-w-lg mx-auto relative h-6 bg-slate-200/50 dark:bg-slate-800/50 rounded-full overflow-hidden shadow-inner backdrop-blur-md ring-1 ring-white/50 dark:ring-white/10 scroll-reveal opacity-0 translate-y-10 transition-all duration-700 ease-out delay-200">
             <div id="daily-progress"
                 class="absolute top-0 right-0 h-full bg-gradient-to-r from-amber-400 via-orange-500 to-amber-400 bg-[length:200%_100%] animate-aurora transition-all duration-1000 ease-out w-0 shadow-[0_0_20px_rgba(245,158,11,0.5)]">
             </div>
         </div>
-        <p class="mt-3 text-sm font-bold text-amber-600 dark:text-amber-400 animate-fade-in-up"
-            style="animation-delay: 0.3s"><span id="progress-text">0%</span> مكتمل</p>
+        <p
+            class="mt-3 text-sm font-bold text-amber-600 dark:text-amber-400 scroll-reveal opacity-0 translate-y-10 transition-all duration-700 ease-out delay-300">
+            <span id="progress-text">0%</span> مكتمل
+        </p>
     </header>
 
-    <!-- Main Content -->
+    <!-- Main Content (z-10) -->
     <main class="flex-grow container mx-auto px-4 pb-32 max-w-4xl z-10 relative">
 
         <!-- Date Navigation -->
-        <div class="glass-card p-4 rounded-full mb-10 flex justify-between items-center animate-fade-in-up ring-1 ring-white/40 dark:ring-white/5"
-            style="animation-delay: 0.4s">
+        <div
+            class="glass-panel glass-card p-4 rounded-full mb-10 flex justify-between items-center ring-1 ring-white/40 dark:ring-white/5 scroll-reveal opacity-0 translate-y-10 transition-all duration-700 ease-out delay-200">
             <button id="prev-day"
-                class="w-12 h-12 flex items-center justify-center rounded-full hover:bg-amber-50 dark:hover:bg-amber-900/20 text-slate-400 dark:text-slate-500 hover:text-amber-600 dark:hover:text-amber-400 transition-all duration-300 active:scale-90">
+                class="w-12 h-12 flex items-center justify-center rounded-full text-slate-400 dark:text-slate-500 hover:text-amber-600 dark:hover:text-amber-400 transition-all duration-300 active:scale-90">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path>
                 </svg>
             </button>
             <span id="display-date" class="font-bold text-xl text-slate-800 dark:text-white tracking-wide">اليوم</span>
             <button id="next-day"
-                class="w-12 h-12 flex items-center justify-center rounded-full hover:bg-amber-50 dark:hover:bg-amber-900/20 text-slate-400 dark:text-slate-500 hover:text-amber-600 dark:hover:text-amber-400 transition-all duration-300 active:scale-90">
+                class="w-12 h-12 flex items-center justify-center rounded-full text-slate-400 dark:text-slate-500 hover:text-amber-600 dark:hover:text-amber-400 transition-all duration-300 active:scale-90">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path>
                 </svg>
@@ -276,8 +305,8 @@
         <form id="tracker-form" class="space-y-8">
 
             <!-- Section: Fard Prayers -->
-            <section class="glass-card p-8 rounded-[2rem] animate-fade-in-up relative overflow-hidden"
-                style="animation-delay: 0.5s">
+            <section
+                class="glass-panel glass-card p-8 rounded-[2rem] relative overflow-hidden scroll-reveal opacity-0 translate-y-10 transition-all duration-700 ease-out">
                 <div
                     class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-amber-400/50 to-transparent">
                 </div>
@@ -326,8 +355,8 @@
             </section>
 
             <!-- Section: Sunnah Prayers -->
-            <section class="glass-card p-8 rounded-[2rem] relative overflow-hidden animate-fade-in-up group"
-                style="animation-delay: 0.6s">
+            <section
+                class="glass-panel glass-card p-8 rounded-[2rem] relative overflow-hidden group scroll-reveal opacity-0 translate-y-10 transition-all duration-700 ease-out">
                 <!-- Background decoration -->
                 <div
                     class="absolute -right-12 -top-12 text-[12rem] text-amber-500 opacity-[0.05] dark:opacity-[0.03] transition-transform duration-700 group-hover:rotate-12 pointer-events-none select-none">
@@ -368,7 +397,8 @@
             <!-- Night Prayers & Quran -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Night Prayers -->
-                <section class="glass-card p-8 rounded-[2rem] animate-fade-in-up" style="animation-delay: 0.7s">
+                <section
+                    class="glass-panel glass-card p-8 rounded-[2rem] scroll-reveal opacity-0 translate-y-10 transition-all duration-700 ease-out">
                     <h2
                         class="text-xl font-bold font-arabic text-slate-800 dark:text-white mb-6 border-b border-slate-200/50 dark:border-white/10 pb-2">
                         قيام الليل</h2>
@@ -397,7 +427,8 @@
                 </section>
 
                 <!-- Quran & Habits -->
-                <section class="glass-card p-8 rounded-[2rem] animate-fade-in-up" style="animation-delay: 0.8s">
+                <section
+                    class="glass-panel glass-card p-8 rounded-[2rem] scroll-reveal opacity-0 translate-y-10 transition-all duration-700 ease-out delay-100">
                     <h2
                         class="text-xl font-bold font-arabic text-slate-800 dark:text-white mb-6 border-b border-slate-200/50 dark:border-white/10 pb-2">
                         القرآن والأذكار</h2>
@@ -440,7 +471,8 @@
             </div>
 
             <!-- Productivity & AI Journal -->
-            <section class="glass-card p-8 rounded-[2rem] animate-fade-in-up" style="animation-delay: 0.9s">
+            <section
+                class="glass-panel glass-card p-8 rounded-[2rem] scroll-reveal opacity-0 translate-y-10 transition-all duration-700 ease-out">
                 <h2
                     class="text-2xl font-bold font-arabic text-slate-800 dark:text-white mb-6 border-b border-slate-200/50 dark:border-white/10 pb-2">
                     التفكر والإنتاجية</h2>
@@ -501,11 +533,12 @@
         </form>
     </main>
 
-    <!-- Premium Footer Nav -->
+    <!-- Premium Footer Nav (z-40) -->
     <nav
         class="fixed bottom-0 w-full nav-glass py-4 z-40 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] dark:shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
         <div class="flex justify-evenly items-center max-w-lg mx-auto">
-            <a href="/" class="flex flex-col items-center gap-1 group">
+            <a href="/"
+                class="flex flex-col items-center gap-1 group active:scale-95 transition-transform duration-150">
                 <div
                     class="p-2 rounded-xl bg-gradient-to-tr from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30 text-amber-600 dark:text-amber-400 shadow-sm ring-1 ring-amber-200 dark:ring-amber-700/50">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -516,7 +549,8 @@
                 </div>
                 <span class="text-[10px] font-bold text-amber-600 dark:text-amber-400">الرئيسية</span>
             </a>
-            <a href="/stats" class="flex flex-col items-center gap-1 group">
+            <a href="/stats"
+                class="flex flex-col items-center gap-1 group active:scale-95 transition-transform duration-150">
                 <div
                     class="p-2 rounded-xl text-slate-400 dark:text-slate-500 group-hover:text-amber-600 dark:group-hover:text-amber-400 group-hover:bg-slate-50 dark:group-hover:bg-active-800 transition-all">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -531,7 +565,7 @@
         </div>
     </nav>
 
-    <!-- Celebration Animation Overlay -->
+    <!-- Celebration Animation Overlay (z-50) -->
     <div id="jannah-animation"
         class="fixed inset-0 z-50 hidden transition-all duration-1000 opacity-0 pointer-events-none data-[state=visible]:opacity-100 data-[state=visible]:pointer-events-auto">
         <!-- Backdrop with blur -->
@@ -576,14 +610,27 @@
 
         themeBtn.addEventListener('click', () => {
             document.documentElement.classList.toggle('dark');
+            const isDark = document.documentElement.classList.contains('dark');
 
             // Save preference
-            if (document.documentElement.classList.contains('dark')) {
+            if (isDark) {
                 localStorage.setItem('theme', 'dark');
+                document.body.classList.remove('light-aurora-bg');
             } else {
                 localStorage.setItem('theme', 'light');
+                document.body.classList.add('light-aurora-bg');
+            }
+
+            // Trigger background animation switch
+            if (window.updateBackgroundTheme) {
+                window.updateBackgroundTheme();
             }
         });
+
+        // Initialize correct BG class on load
+        if (!document.documentElement.classList.contains('dark')) {
+            document.body.classList.add('light-aurora-bg');
+        }
     </script>
 </body>
 
